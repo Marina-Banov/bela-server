@@ -1,0 +1,43 @@
+import { SAMESIES, IN_A_ROW, COUNT_IN_A_ROW_LARGEST } from '../constants/Scales';
+
+export function evaluateScale(cards: string[]) {
+	let scale = null;
+
+	// ako su 4 iste vrste
+	if (cards.length === 4 && cards[0][1] !== '7' && cards[0][1] !== '8' && cards.every( x => x.includes(cards[0][1]) )) {
+		scale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === cards[0][1])));
+	}
+
+	// ako su sve u istoj boji
+	if (cards.every( x => x.includes(cards[0][0]) )) {
+		let IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(COUNT_IN_A_ROW_LARGEST));
+
+		for (let i = 0; i < cards.length; i++) {
+			const key = '-upto-' + cards[i][1];
+			IN_A_ROW_LARGEST[key].value = true;
+		}
+
+		let found = false;
+		let largest = null;
+		let count = 0;
+		for (const key of Object.keys(IN_A_ROW_LARGEST)) {
+			if (IN_A_ROW_LARGEST[key].value) {
+				largest = key;
+				count++;
+
+				if (!found)
+					found = true;
+			} else {
+				if (found)
+					break;
+			}
+		}
+
+		if (count >= 3) {
+			scale = JSON.parse(JSON.stringify(IN_A_ROW.find(x => parseInt(x.sign[6], 10) === count)));
+			scale.sign = scale.sign + largest;
+			scale.priority += IN_A_ROW_LARGEST[largest].priority;
+		}
+	}
+	return scale;
+}
