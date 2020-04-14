@@ -18,7 +18,7 @@ export const IN_A_ROW: Scale[] = [
 	new Scale('count-3',   20, 500)
 ];
 
-export const COUNT_IN_A_ROW_LARGEST = {
+export const COUNT_IN_A_ROW_LARGEST: any = {
 	'-upto-7': { value: false, priority: 5 },
 	'-upto-8': { value: false, priority: 5 },
 	'-upto-9': { value: false, priority: 5 },

@@ -11,6 +11,8 @@ export class Game {
 	curScalePriority: any;
 	pointsA: number;
 	pointsB: number;
+	tookCardsA: boolean;
+	tookCardsB: boolean;
 	cardsOnTable: any[];
 	firstToPlay: number;
 
@@ -32,46 +34,48 @@ export class Game {
 		};
 		this.pointsA = 0;
 		this.pointsB = 0;
+		this.tookCardsA = false;
+		this.tookCardsB = false;
 		this.cardsOnTable = [];
 		this.firstToPlay = this.turn;
 	}
 
-	turnAfterDealer() {
+	turnAfterDealer(): number {
 		this.turn = (Game.dealer + 1) % 4;
 		return this.turn;
 	}
 
-	nextTurn() {
+	nextTurn(): number {
 		this.turn = (this.turn + 1) % 4;
 		return this.turn;
 	}
 
-	setTrump(trump: any) {
+	setTrump(trump: any): void {
 		this.trump = trump;
 	}
 
-	dealCards() {
+	dealCards(): Card[] {
 		if (this.availableCards.length < 8) {
 			console.log("Player count maxed");
 			return null;
 		}
 
-		let hand = [];
-		let deck = JSON.parse(JSON.stringify(DECK));
+		const hand = [];
+		const deck = JSON.parse(JSON.stringify(DECK));
 
 		while (hand.length < 8) {
-			let random = Math.floor(Math.random() * this.availableCards.length);
+			const random = Math.floor(Math.random() * this.availableCards.length);
 			hand.push(deck[this.availableCards[random]]);
 			this.availableCards.splice(random, 1);
 		}
 
 		const lastTwo = hand.splice(6,7);
 		hand.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
-		
+
 		return hand.concat(lastTwo);
 	}
 
-	setTrumpValues(users: Player[]) {
+	setTrumpValues(users: Player[]): void {
 		users.forEach(user => {
 			user.hand.forEach(card => {
 				if (card.sign[0] === this.trump.sign) {
@@ -83,11 +87,12 @@ export class Game {
 					}
 				}
 			});
-			user.hand.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
+			user.bela = (user.hand.filter(x => x.trump && (x.sign[1] === 'Q' || x.sign[1] === 'K')).length === 2);
+			user.sortHand();
 		});
 	}
 
-	addScalePoints(team: Team) {
+	addScalePoints(team: Team): void {
 		let p = 0;
 		for (const s of team.scales) {
 			p += s.points;
@@ -99,18 +104,18 @@ export class Game {
 		}
 	}
 
-	getGamePoints() {
+	getGamePoints(): any {
 		return { A: this.pointsA, B: this.pointsB };
 	}
 
-	putCardOnTable(card: Card, player: Player) {
-		// TODO RESTRICTIONS	
-		const index = player.hand.indexOf(player.hand.find(x => x.sign === card.sign));
-		player.hand.splice(index, 1);
+	putCardOnTable(sign: string, player: Player): void {
+		// TODO RESTRICTIONS
+		const index = player.hand.indexOf(player.hand.find(x => x.sign === sign));
+		const card = player.hand.splice(index, 1)[0];
 		this.cardsOnTable.push({ card, username: player.username });
 	}
 
-	checkForFail() {
+	checkForFail(): boolean {
 		const goal = (this.pointsA + this.pointsB) / 2 + 1;
 		if (this.trump.team === 'A' && this.pointsA < goal) {
 			this.pointsB += this.pointsA;

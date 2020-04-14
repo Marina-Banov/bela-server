@@ -29,7 +29,7 @@ class Team {
         return false;
     }
     getScales() {
-        let hands = [];
+        const hands = [];
         for (const s of this.scales) {
             hands.push({ hand: s.hand, username: s.username });
         }

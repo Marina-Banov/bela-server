@@ -1,6 +1,7 @@
+import { Scale } from '../classes/Scale';
 import { SAMESIES, IN_A_ROW, COUNT_IN_A_ROW_LARGEST } from '../constants/Scales';
 
-export function evaluateScale(cards: string[]) {
+export function evaluateScale(cards: string[]): Scale {
 	let scale = null;
 
 	// ako su 4 iste vrste
@@ -10,12 +11,12 @@ export function evaluateScale(cards: string[]) {
 
 	// ako su sve u istoj boji
 	if (cards.every( x => x.includes(cards[0][0]) )) {
-		let IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(COUNT_IN_A_ROW_LARGEST));
+		const IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(COUNT_IN_A_ROW_LARGEST));
 
-		for (let i = 0; i < cards.length; i++) {
-			const key = '-upto-' + cards[i][1];
+		cards.forEach(c => {
+			const key = '-upto-' + c[1];
 			IN_A_ROW_LARGEST[key].value = true;
-		}
+		});
 
 		let found = false;
 		let largest = null;

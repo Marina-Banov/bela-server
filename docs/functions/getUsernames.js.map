@@ -1,0 +1,1 @@
+{"version":3,"file":"getUsernames.js","sourceRoot":"","sources":["../../src/functions/getUsernames.ts"],"names":[],"mappings":";;AAEA,SAAgB,YAAY,CAAC,KAAe;IAC3C,IAAI,SAAS,GAAG,EAAE,CAAA;IAClB,KAAK,CAAC,OAAO,CAAC,CAAC,CAAC,EAAE;QACjB,SAAS,CAAC,IAAI,CAAC,CAAC,CAAC,QAAQ,CAAC,CAAC;IAC5B,CAAC,CAAC,CAAC;IACH,OAAO,SAAS,CAAC;AAClB,CAAC;AAND,oCAMC"}

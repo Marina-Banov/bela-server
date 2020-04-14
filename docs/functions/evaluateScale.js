@@ -9,11 +9,11 @@ function evaluateScale(cards) {
     }
     // ako su sve u istoj boji
     if (cards.every(x => x.includes(cards[0][0]))) {
-        let IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(Scales_1.COUNT_IN_A_ROW_LARGEST));
-        for (let i = 0; i < cards.length; i++) {
-            const key = '-upto-' + cards[i][1];
+        const IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(Scales_1.COUNT_IN_A_ROW_LARGEST));
+        cards.forEach(c => {
+            const key = '-upto-' + c[1];
             IN_A_ROW_LARGEST[key].value = true;
-        }
+        });
         let found = false;
         let largest = null;
         let count = 0;

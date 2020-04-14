@@ -20,6 +20,8 @@ class Game {
         };
         this.pointsA = 0;
         this.pointsB = 0;
+        this.tookCardsA = false;
+        this.tookCardsB = false;
         this.cardsOnTable = [];
         this.firstToPlay = this.turn;
     }
@@ -39,10 +41,10 @@ class Game {
             console.log("Player count maxed");
             return null;
         }
-        let hand = [];
-        let deck = JSON.parse(JSON.stringify(Deck_1.DECK));
+        const hand = [];
+        const deck = JSON.parse(JSON.stringify(Deck_1.DECK));
         while (hand.length < 8) {
-            let random = Math.floor(Math.random() * this.availableCards.length);
+            const random = Math.floor(Math.random() * this.availableCards.length);
             hand.push(deck[this.availableCards[random]]);
             this.availableCards.splice(random, 1);
         }
@@ -63,7 +65,8 @@ class Game {
                     }
                 }
             });
-            user.hand.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
+            user.bela = (user.hand.filter(x => x.trump && (x.sign[1] === 'Q' || x.sign[1] === 'K')).length === 2);
+            user.sortHand();
         });
     }
     addScalePoints(team) {
@@ -81,10 +84,10 @@ class Game {
     getGamePoints() {
         return { A: this.pointsA, B: this.pointsB };
     }
-    putCardOnTable(card, player) {
-        // TODO RESTRICTIONS	
-        const index = player.hand.indexOf(player.hand.find(x => x.sign === card.sign));
-        player.hand.splice(index, 1);
+    putCardOnTable(sign, player) {
+        // TODO RESTRICTIONS
+        const index = player.hand.indexOf(player.hand.find(x => x.sign === sign));
+        const card = player.hand.splice(index, 1)[0];
         this.cardsOnTable.push({ card, username: player.username });
     }
     checkForFail() {

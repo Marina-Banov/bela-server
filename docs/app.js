@@ -13,16 +13,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Match_1 = require("./classes/Match");
 const Game_1 = require("./classes/Game");
 const Player_1 = require("./classes/Player");
-const getPlayerTeam_1 = require("./functions/getPlayerTeam");
+const playerHelperFunctions_1 = require("./functions/playerHelperFunctions");
 const evaluateScale_1 = require("./functions/evaluateScale");
 const evaluatePlay_1 = require("./functions/evaluatePlay");
 const express_1 = __importDefault(require("express"));
 const http = __importStar(require("http"));
 const io = __importStar(require("socket.io"));
-let connections = [];
+const connections = [];
 let match;
 let curGame;
-let users = [];
+const users = [];
 const app = express_1.default();
 app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
 const httpServer = http.createServer(app);
@@ -37,7 +37,22 @@ socketIo.on('connection', socket => {
     });
     socket.on('calledTrump', (trump) => calledTrump(trump, socket.username));
     socket.on('calledScale', (cards) => calledScale(cards, socket.username));
-    socket.on('cardPlayed', (card) => cardPlayed(card, socket.username));
+    socket.on('cardPlayed', (card) => {
+        if (users.find(x => x.username === socket.username).checkBela(card)) {
+            socketIo.emit('callBela', { username: socket.username, card });
+        }
+        else {
+            cardPlayed(card, socket.username);
+        }
+    });
+    socket.on('calledBela', (bela) => {
+        if (bela.called) {
+            calledBela(socket.username);
+        }
+        cardPlayed(bela.card, socket.username);
+    });
+    socket.on('userLeaves', (username) => userLeaves(username));
+    socket.on('killedMatch', (username) => socketIo.emit('killMatch', username));
     socket.on('disconnect', () => disconnect(socket));
 });
 function connect(socket) {
@@ -49,7 +64,7 @@ function connect(socket) {
     console.log('Connected: %s sockets connected', connections.length);
 }
 function disconnect(socket) {
-    let i = users.indexOf(users.find(user => user.username === socket.username));
+    const i = users.indexOf(users.find(user => user.username === socket.username));
     if (i !== -1) {
         users.splice(i, 1);
     }
@@ -57,8 +72,8 @@ function disconnect(socket) {
     console.log('Disconnected: %s sockets connected', connections.length);
 }
 function newUser(username) {
-    let user = new Player_1.Player(username, curGame.dealCards());
-    socketIo.emit('hand', { username, hand: user.hand });
+    const user = new Player_1.Player(username, curGame.dealCards());
+    socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: false });
     users.push(user);
     if (user.team === 'A') {
         match.teamA.users.push(user);
@@ -66,26 +81,30 @@ function newUser(username) {
     else {
         match.teamB.users.push(user);
     }
-    if (users.length < 4) {
-        socketIo.emit('waiting');
-    }
-    else {
-        socketIo.emit('updateUsers', users);
-        let turn = curGame.turn;
-        socketIo.emit('callTrump', { username: users[turn].username, lastCall: false });
+    if (users.length === 4) {
+        socketIo.emit('updateUsers', { usernames: playerHelperFunctions_1.getUsernames(users), teams: playerHelperFunctions_1.getTeams(users) });
+        setTimeout(() => {
+            socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
+        }, 2000);
     }
 }
 function calledTrump(trump, username) {
     if (trump === '') {
-        let turn = curGame.nextTurn();
-        let lastCall = users[Game_1.Game.dealer].username === users[turn].username;
+        const turn = curGame.nextTurn();
+        const lastCall = users[Game_1.Game.dealer].username === users[turn].username;
         socketIo.emit('callTrump', { username: users[turn].username, lastCall });
+        const player = users.find(x => x.username === username);
+        player.sortHand();
+        socketIo.emit('hand', { username: player.username, hand: player.getOnlyCardSigns(), display8: true });
     }
     else {
-        curGame.setTrump({ sign: trump, team: getPlayerTeam_1.getPlayerTeam(users, username) });
+        curGame.setTrump({ sign: trump, team: playerHelperFunctions_1.getPlayerTeam(users, username) });
         curGame.setTrumpValues(users);
-        let turn = curGame.turnAfterDealer();
-        socketIo.emit('setTrump', { username, users, trump });
+        socketIo.emit('setTrump', { trump, username });
+        users.forEach(player => {
+            socketIo.emit('hand', { username: player.username, hand: player.getOnlyCardSigns(), display8: true });
+        });
+        const turn = curGame.turnAfterDealer();
         socketIo.emit('callScale', users[turn].username);
     }
 }
@@ -96,7 +115,7 @@ function calledScale(cards, username) {
         if (scale) {
             let announce = true;
             const s = { sign: scale.sign, points: scale.points, hand: cards, username };
-            const team = getPlayerTeam_1.getPlayerTeam(users, username);
+            const team = playerHelperFunctions_1.getPlayerTeam(users, username);
             if (team === 'A') {
                 announce = match.teamA.addScale(s, scale.priority, curPriority);
             }
@@ -104,15 +123,15 @@ function calledScale(cards, username) {
                 announce = match.teamB.addScale(s, scale.priority, curPriority);
             }
             if (announce) {
-                socketIo.emit('announceScale', username + ' zove ' + scale.points + '!');
+                socketIo.emit('announceScale', { username, points: scale.points, bela: false });
             }
         }
         socketIo.emit('callScale', users[curGame.turn].username);
     }
     else {
-        socketIo.emit('announceScale', username + ' zove DALJE!');
+        socketIo.emit('announceScale', { username, points: 0, bela: false });
         if (curGame.turn !== Game_1.Game.dealer) {
-            let turn = curGame.nextTurn();
+            const turn = curGame.nextTurn();
             socketIo.emit('callScale', users[turn].username);
         }
         else {
@@ -125,47 +144,89 @@ function calledScale(cards, username) {
                 socketIo.emit('showScales', match.teamB.getScales());
             }
             socketIo.emit('gamePoints', curGame.getGamePoints());
-            let turn = curGame.turnAfterDealer();
+            const turn = curGame.turnAfterDealer();
             socketIo.emit('playCard', users[turn].username);
         }
     }
 }
 function cardPlayed(card, username) {
-    let user = users.find(x => x.username === username);
+    const user = users.find(x => x.username === username);
     curGame.putCardOnTable(card, user);
-    socketIo.emit('acceptCard', { username, card: card.sign });
-    socketIo.emit('hand', { username, hand: user.hand });
+    socketIo.emit('acceptCard', { username, card });
+    socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: true });
     if (curGame.nextTurn() === curGame.firstToPlay) {
         const points = evaluatePlay_1.evaluatePlay(curGame.cardsOnTable);
         if (user.hand.length === 0) {
             points.value += 10;
+            if (!curGame.tookCardsA || !curGame.tookCardsB) {
+                points.value += 90;
+            }
         }
-        const team = getPlayerTeam_1.getPlayerTeam(users, points.username);
+        const team = playerHelperFunctions_1.getPlayerTeam(users, points.username);
         if (team === 'A') {
             curGame.pointsA += points.value;
+            curGame.tookCardsA = true;
         }
         else {
             curGame.pointsB += points.value;
+            curGame.tookCardsB = true;
         }
         if (user.hand.length !== 0) {
-            socketIo.emit('gamePoints', curGame.getGamePoints());
-            curGame.firstToPlay = users.indexOf(users.find(x => x.username === points.username));
-            curGame.turn = curGame.firstToPlay;
-            curGame.cardsOnTable = [];
+            setTimeout(() => {
+                socketIo.emit('gamePoints', curGame.getGamePoints());
+                curGame.firstToPlay = users.indexOf(users.find(x => x.username === points.username));
+                curGame.turn = curGame.firstToPlay;
+                curGame.cardsOnTable = [];
+                socketIo.emit('playCard', users[curGame.turn].username);
+            }, 2000);
         }
         else {
             if (curGame.checkForFail()) {
                 socketIo.emit('fail', curGame.trump.team);
             }
-            curGame = match.startNewGame();
-            for (let u of users) {
-                u.hand = curGame.dealCards();
-                socketIo.emit('hand', { username: u.username, hand: user.hand });
-            }
-            socketIo.emit('matchPoints', match.getMatchPoints());
-            socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
+            setTimeout(() => {
+                curGame = match.startNewGame();
+                const matchPoints = match.getMatchPoints();
+                socketIo.emit('matchPoints', matchPoints);
+                const winnerTeam = match.endMatch(matchPoints.total);
+                if (winnerTeam) {
+                    setTimeout(() => {
+                        socketIo.emit('endMatch', winnerTeam);
+                    }, 1000);
+                }
+                else {
+                    users.forEach(u => {
+                        u.hand = curGame.dealCards();
+                        socketIo.emit('hand', { username: u.username, hand: u.getOnlyCardSigns(), display8: false });
+                    });
+                    socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
+                }
+            }, 2000);
         }
     }
-    socketIo.emit('playCard', users[curGame.turn].username);
+    else {
+        socketIo.emit('playCard', users[curGame.turn].username);
+    }
+}
+function calledBela(username) {
+    socketIo.emit('announceScale', { username, points: 20, bela: true });
+    const team = playerHelperFunctions_1.getPlayerTeam(users, username);
+    if (team === 'A') {
+        curGame.pointsA += 20;
+    }
+    else {
+        curGame.pointsB += 20;
+    }
+    socketIo.emit('gamePoints', curGame.getGamePoints());
+}
+function userLeaves(username) {
+    const i = users.indexOf(users.find(user => user.username === username));
+    if (i !== -1) {
+        users.splice(i, 1);
+    }
+    if (users.length === 0) {
+        match = new Match_1.Match();
+        curGame = match.startNewGame();
+    }
 }
 //# sourceMappingURL=app.js.map

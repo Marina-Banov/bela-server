@@ -14,10 +14,10 @@ class Match {
         return g;
     }
     getMatchPoints() {
-        let lastGame = this.games[this.games.length - 1];
+        const lastGame = this.games[this.games.length - 1];
         let totalA = lastGame.pointsA;
         let totalB = lastGame.pointsB;
-        let games = [];
+        const games = [];
         games.push({ A: totalA, B: totalB });
         for (let i = 0; i < this.games.length - 1; i++) {
             totalA += this.games[i].pointsA;
@@ -25,6 +25,19 @@ class Match {
             games.push({ A: this.games[i].pointsA, B: this.games[i].pointsB });
         }
         return { games, total: { A: totalA, B: totalB } };
+    }
+    endMatch(totalPoints) {
+        let winnerTeam = null;
+        if (totalPoints.A >= 1001 && totalPoints.B >= 1001) {
+            winnerTeam = (totalPoints.A > totalPoints.B) ? 'A' : 'B';
+        }
+        else if (totalPoints.A >= 1001) {
+            winnerTeam = 'A';
+        }
+        else if (totalPoints.B >= 1001) {
+            winnerTeam = 'B';
+        }
+        return winnerTeam;
     }
 }
 exports.Match = Match;

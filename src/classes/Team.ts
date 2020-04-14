@@ -13,7 +13,7 @@ export class Team {
 		this.scales = [];
 	}
 
-	addScale(scale: any, priority: number, curPriority: any) {
+	addScale(scale: any, priority: number, curPriority: any): boolean {
 		if (this.scales.find(x => x.sign === scale.sign)) {
 			return false;
 		}
@@ -36,8 +36,8 @@ export class Team {
 		return false;
 	}
 
-	getScales() {
-		let hands = [];
+	getScales(): any[] {
+		const hands = [];
 		for (const s of this.scales) {
 			hands.push({ hand: s.hand, username: s.username });
 		}
