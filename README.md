@@ -2,14 +2,14 @@
 
 [![Deploy on Heroku](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
-## socket.io events emitted BY the server
+## socket.io events emitted by the server
 
 - hand  
 data: { username: string, hand: string[], display8: boolean }  
 description: data.hand is the set of 8 card codes assigned to player with data.username. data.display8 indicates whether frontend should display all 8 cards. Emitted at the beginning of every game and after trump is set.
 
 - updateUsernames  
-data: { usernames: string[], teams: string[] }  
+data: { usernames: string[], teams: { A: string[], B: string[] } }  
 description: Emitted once all the players have joined the game room.
 
 - callTrump  
@@ -47,6 +47,10 @@ description: the first element of data.games is the result of the most recent ga
 - playCard  
 data: string  
 description: data is the username of player whose turn it is to play a card.
+
+- cardNotAllowed  
+data: string  
+description: data is the username of player who chose an illegal card move.
 
 - acceptCard  
 data: { username: string, card: string }  
