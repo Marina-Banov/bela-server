@@ -154,7 +154,10 @@ function calledScale(cards: string[], username: string): void {
 
 function cardPlayed(card: string, username: string): void {
 	const user = users.find(x => x.username === username);
-	curGame.putCardOnTable(card, user);
+
+	//TODO: add checks for accepting and denying card
+	var isPlayValid = curGame.putCardOnTable(card, user);
+
 	socketIo.emit('acceptCard', { username, card });
 	socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: true });
 
