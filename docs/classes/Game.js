@@ -84,8 +84,56 @@ class Game {
     getGamePoints() {
         return { A: this.pointsA, B: this.pointsB };
     }
+    isPlayValid(sign, player) {
+        if (this.cardsOnTable.length === 0) {
+            return true;
+        }
+        // if player is not first
+        const cardsOnTable = this.cardsOnTable.map(x => x.card);
+        const card = player.hand.find(x => x.sign === sign);
+        const cutWithTrump = !!cardsOnTable.find(x => x.trump && x !== cardsOnTable[0]);
+        const playColor = this.cardsOnTable[0].card.sign[0];
+        const cardsOfSameColor = player.hand.filter(x => x.sign[0] === playColor);
+        if (cardsOfSameColor.length > 0) {
+            if (sign[0] !== playColor) {
+                // the player must play the card of the same color as the first card
+                return false;
+            }
+            else if (cutWithTrump) {
+                return true;
+            }
+            const highest = Math.max.apply(Math, cardsOfSameColor.map(x => x.points));
+            return this.compareWithRelevantArray(card, cardsOnTable.filter(x => x.sign[0] === playColor), highest);
+        }
+        const trumpCards = player.hand.filter(x => x.trump);
+        if (trumpCards.length > 0) {
+            if (!card.trump) {
+                // player must play trump
+                return false;
+            }
+            else if (!cutWithTrump) {
+                // allow any trump to be played if there is no other trump already played
+                return true;
+            }
+            const highest = Math.max.apply(Math, trumpCards.map(x => x.points));
+            return this.compareWithRelevantArray(card, cardsOnTable.filter(x => x.trump), highest);
+        }
+        return true;
+    }
+    compareWithRelevantArray(card, array, highest) {
+        let maxPoints = array[0].points;
+        let maxScalePrio = array[0].scalePriority;
+        for (let i = 1; i < array.length; i++) {
+            if (array[i].points > maxPoints) {
+                maxPoints = array[i].points;
+                maxScalePrio = array[i].scalePriority;
+            }
+        }
+        // play is valid if it's more valuable than most valuable card or if the player doesn't have a more valuable card
+        return ((card.points > maxPoints || card.points === maxPoints && card.scalePriority > maxScalePrio)
+            || card.points <= maxPoints && highest <= maxPoints);
+    }
     putCardOnTable(sign, player) {
-        // TODO RESTRICTIONS
         const index = player.hand.indexOf(player.hand.find(x => x.sign === sign));
         const card = player.hand.splice(index, 1)[0];
         this.cardsOnTable.push({ card, username: player.username });

@@ -4,8 +4,8 @@
   "description": "bela server",
   "main": "docs/app.js",
   "scripts": {
-    "start": "tsc && node docs/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start": "node docs/app.js"
   },
   "author": "Marina-Banov",
   "dependencies": {
