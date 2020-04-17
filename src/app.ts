@@ -171,6 +171,13 @@ function cardPlayed(card: string, username: string): void {
 			if (!curGame.tookCardsA || !curGame.tookCardsB) {
 				points.value += 90;
 			}
+			if (curGame.pointsA && !curGame.tookCardsA) {
+				curGame.pointsB += curGame.pointsA;
+				curGame.pointsA = 0;
+			} else if (curGame.pointsB && !curGame.tookCardsB) {
+				curGame.pointsA += curGame.pointsB;
+				curGame.pointsB = 0;
+			}
 		}
 
 		const team = getPlayerTeam(users, points.username);
