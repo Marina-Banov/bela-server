@@ -15,8 +15,8 @@ export class Match {
 	startNewGame(): Game {
 		const g = new Game();
 		this.games.push(g);
-		teamA.scales.splice(0, teamA.scales.length);
-		teamB.scales.splice(0, teamB.scales.length)
+		this.teamA.scales.splice(0, this.teamA.scales.length);
+		this.teamB.scales.splice(0, this.teamB.scales.length);
 		return g;
 	}
 

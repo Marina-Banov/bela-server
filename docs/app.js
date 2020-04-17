@@ -165,6 +165,14 @@ function cardPlayed(card, username) {
             if (!curGame.tookCardsA || !curGame.tookCardsB) {
                 points.value += 90;
             }
+            if (curGame.pointsA && !curGame.tookCardsA) {
+                curGame.pointsB += curGame.pointsA;
+                curGame.pointsA = 0;
+            }
+            else if (curGame.pointsB && !curGame.tookCardsB) {
+                curGame.pointsA += curGame.pointsB;
+                curGame.pointsB = 0;
+            }
         }
         const team = playerHelperFunctions_1.getPlayerTeam(users, points.username);
         if (team === 'A') {

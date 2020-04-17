@@ -11,6 +11,8 @@ class Match {
     startNewGame() {
         const g = new Game_1.Game();
         this.games.push(g);
+        this.teamA.scales.splice(0, this.teamA.scales.length);
+        this.teamB.scales.splice(0, this.teamB.scales.length);
         return g;
     }
     getMatchPoints() {
