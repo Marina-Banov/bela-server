@@ -151,6 +151,10 @@ function calledScale(cards, username) {
 }
 function cardPlayed(card, username) {
     const user = users.find(x => x.username === username);
+    if (!curGame.isPlayValid(card, user)) {
+        socketIo.emit('cardNotAllowed', username);
+        return;
+    }
     curGame.putCardOnTable(card, user);
     socketIo.emit('acceptCard', { username, card });
     socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: true });
@@ -160,6 +164,14 @@ function cardPlayed(card, username) {
             points.value += 10;
             if (!curGame.tookCardsA || !curGame.tookCardsB) {
                 points.value += 90;
+            }
+            if (curGame.pointsA && !curGame.tookCardsA) {
+                curGame.pointsB += curGame.pointsA;
+                curGame.pointsA = 0;
+            }
+            else if (curGame.pointsB && !curGame.tookCardsB) {
+                curGame.pointsA += curGame.pointsB;
+                curGame.pointsB = 0;
             }
         }
         const team = playerHelperFunctions_1.getPlayerTeam(users, points.username);

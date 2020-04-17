@@ -1,1 +1,0 @@
-{"version":3,"file":"getPlayerTeam.js","sourceRoot":"","sources":["../../src/functions/getPlayerTeam.ts"],"names":[],"mappings":";;AAEA,SAAgB,aAAa,CAAC,KAAe,EAAE,QAAgB;IAC9D,OAAO,KAAK,CAAC,IAAI,CAAC,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC,QAAQ,KAAK,QAAQ,CAAC,CAAC,IAAI,CAAC;AACtD,CAAC;AAFD,sCAEC"}

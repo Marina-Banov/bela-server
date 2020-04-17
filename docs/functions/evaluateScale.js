@@ -31,7 +31,7 @@ function evaluateScale(cards) {
         }
         if (count >= 3) {
             scale = JSON.parse(JSON.stringify(Scales_1.IN_A_ROW.find(x => parseInt(x.sign[6], 10) === count)));
-            scale.sign = scale.sign + largest;
+            scale.sign = cards[0][0] + '-' + scale.sign + largest;
             scale.priority += IN_A_ROW_LARGEST[largest].priority;
         }
     }
