@@ -42,3 +42,62 @@ export function evaluateScale(cards: string[]): Scale {
 	}
 	return scale;
 }
+
+export function evaluateScale2(cards: number[]): Scale {
+	let scales = [];
+
+	// ako su 4 iste vrste
+	let colorTypeMap = Array(4).fill().map(() => Array(8).fill(false));
+
+	cards.forEach((x) => {
+		let cardType = x & 7;
+		let cardColor = x >> 3 & 3;
+		colorTypeMap[cardColor][cardType] = true;
+	});
+
+	let inARow = Array(4).fill(0);
+
+	//check for scales up to A
+	for (let t = 0; t < 8; t++)
+	{
+		let curTypeColors = 0;
+		for (let c = 0; c < 4; c++)
+		{
+			if (colorTypeMap[c][t])
+			{
+				inARow[c]++;
+				curTypeColors++;
+			}
+			else
+			{
+				if (inARow[c] >= 3)
+				{
+					let curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] - 2])));
+					curScale.sign = DECK[c << 3].sign[0] + '-' + curScale.sign + DECK[t].sign[1];
+					curScale.priority += IN_A_ROW_LARGEST[t].priority;
+					scales.push(curScale);
+				}
+				inARow[c] = 1;
+			}
+		}
+		if (curTypeColors == 4)
+		{
+			let curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK[t].sign[1])));
+			scales.push(curScale);
+		}
+	}
+
+	//loop above wont take care of scales that include A so it needs to be fixed by this for
+	for (let c = 0; c < 4; c++)
+	{
+		if (inARow[c] >= 3)
+		{
+			let curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] - 2])));
+			curScale.sign = DECK[c << 3].sign[0] + '-' + curScale.sign + DECK[7].sign[1];
+			curScale.priority += IN_A_ROW_LARGEST[t].priority;
+			scales.push(curScale);
+		}
+	}
+
+	return scales;
+}
