@@ -114,7 +114,7 @@ function calledTrump(trump: string, username: string): void {
 	}
 }
 
-calledScale([ 'C7', 'C8', 'CX', 'CQ', 'CK', 'CA' ], 'marin');
+calledScale([ 'S9', 'C7', 'C8', 'C9', 'CQ', 'H9', 'D9' ], 'marin');
 
 function calledScale(cards: string[], username: string): void {
 // 	const curPriority = curGame.curScalePriority;

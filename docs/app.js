@@ -112,7 +112,7 @@ function calledTrump(trump, username) {
         socketIo.emit('callScale', users[turn].username);
     }
 }
-calledScale(['C7', 'C8', 'CX', 'CQ', 'CK', 'CA'], 'marin');
+calledScale(['S9', 'C7', 'C8', 'C9', 'CQ', 'H9', 'D9'], 'marin');
 function calledScale(cards, username) {
     // 	const curPriority = curGame.curScalePriority;
     console.log(cards);
