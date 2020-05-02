@@ -62,10 +62,10 @@ function evaluateScale2(cards) {
                 if (inARow[c] >= 3) {
                     const curScale = JSON.parse(JSON.stringify(Scales_1.IN_A_ROW[6 - inARow[c] + 2]));
                     curScale.sign = Deck_1.DECK_SIGNS[c << 3][0] + '-' + curScale.sign + IN_A_ROW_LARGEST[t - 1].sign;
-                    curScale.priority = IN_A_ROW_LARGEST[t].priority;
+                    curScale.priority += IN_A_ROW_LARGEST[t].priority;
                     scales.push(curScale);
                 }
-                inARow[c] = 1;
+                inARow[c] = 0;
             }
         }
         if (curTypeColors === 4) {
@@ -76,9 +76,9 @@ function evaluateScale2(cards) {
     // loop above wont take care of scales that include A so it needs to be fixed by this for
     for (let c = 0; c < 4; c++) {
         if (inARow[c] >= 3) {
-            const curScale = JSON.parse(JSON.stringify(Scales_1.IN_A_ROW[6 - inARow[c] - 2]));
+            const curScale = JSON.parse(JSON.stringify(Scales_1.IN_A_ROW[6 - inARow[c] + 2]));
             curScale.sign = Deck_1.DECK_SIGNS[c << 3][0] + '-' + curScale.sign + '-upto-A';
-            curScale.priority = IN_A_ROW_LARGEST[7].priority;
+            curScale.priority += IN_A_ROW_LARGEST[7].priority;
             scales.push(curScale);
         }
     }
