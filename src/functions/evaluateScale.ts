@@ -60,6 +60,7 @@ export function evaluateScale2(cards: number[]): Scale[] {
 
 	const IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(COUNT_IN_A_ROW_LARGEST));
 	// check for scales up to A
+	const scalesInternal = [];
 	for (let t = 0; t < 8; t++) {
 		let curTypeColors = 0;
 		for (let c = 0; c < 4; c++) {
@@ -72,6 +73,7 @@ export function evaluateScale2(cards: number[]): Scale[] {
 					curScale.sign = DECK_SIGNS[c << 3][0] + '-' + curScale.sign + IN_A_ROW_LARGEST[t-1].sign;
 					curScale.priority += IN_A_ROW_LARGEST[t].priority;
 					scales.push(curScale);
+					scalesInternal.push({ count: inARow[c], top: t - 1, color: c});
 				}
 				inARow[c] = 0;
 			}
@@ -79,6 +81,7 @@ export function evaluateScale2(cards: number[]): Scale[] {
 		if (curTypeColors === 4) {
 			const curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[t][1])));
 			scales.push(curScale);
+			scalesInternal.push({ count: 420, top: t, color: 0});
 		}
 	}
 
@@ -89,7 +92,37 @@ export function evaluateScale2(cards: number[]): Scale[] {
 			curScale.sign = DECK_SIGNS[c << 3][0] + '-' + curScale.sign + '-upto-A';
 			curScale.priority += IN_A_ROW_LARGEST[7].priority;
 			scales.push(curScale);
+			scalesInternal.push({ count: inARow[c], top: 7, color: c});
 		}
+	}
+
+	for (let c = 0; c < cards.length; c++)
+	{
+		let cardInRange = false;
+		for (let i = 0; i < scalesInternal.length; i++)
+		{
+			const cardType = cards[c] & 7;
+			const cardColor = cards[c] >> 3 & 3;
+			if (scalesInternal[i].count > 8)
+			{
+				if (cardType === scalesInternal[i].top)
+				{
+					cardInRange = true;
+					break;
+				}
+			}
+			else
+			{
+				const firstCard = scalesInternal[i].top - scalesInternal[i].count + 1;
+				if (cardColor == scalesInternal[i].color && cardType >= firstCard && cardType <= scalesInternal[i].top)
+				{
+					cardInRange = true;
+					break;
+				}
+			}
+		}
+		if (!cardInRange)
+			return null;
 	}
 
 	return scales;
