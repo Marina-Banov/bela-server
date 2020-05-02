@@ -7,7 +7,6 @@ import { evaluatePlay } from './functions/evaluatePlay';
 import express from 'express';
 import * as http from 'http';
 import * as io from 'socket.io';
-import { DECK } from './constants/Deck';
 
 const connections: any[] = [];
 let match: Match;
@@ -21,7 +20,7 @@ app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
 
 const httpServer = http.createServer(app);
 const port = process.env.PORT || 80;
-// httpServer.listen(port, () => console.log('listening on *:', port));
+httpServer.listen(port, () => console.log('listening on *:', port));
 
 const socketIo = io.listen(httpServer);
 socketIo.on('connection', socket => {
@@ -113,24 +112,18 @@ function calledTrump(trump: string, username: string): void {
 		socketIo.emit('callScale', users[turn].username);
 	}
 }
-calledScale(['C7', 'C9', 'C8'], 'marin');
 
 function calledScale(cards: string[], username: string): void {
-// 	const curPriority = curGame.curScalePriority;
-
-	console.log(cards);
-	const getCards = [];
-	cards.forEach(x => getCards.push(DECK[x]));
-	getCards.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
-	console.log(getCards);
+	const curPriority = curGame.curScalePriority;
 
 	if (cards.length > 0) {
 		const scale = evaluateScale(cards);
 		if (scale) {
+			let announce = true;
 			const s = { sign: scale.sign, points: scale.points, hand: cards, username };
-			console.log(s);
-		/*	let announce = true;
 			const team = getPlayerTeam(users, username);
+			cards = [];
+			getCards.forEach(x => cards.push(x.scalePriority));
 
 			if (team === 'A') {
 				announce = match.teamA.addScale(s, scale.priority, curPriority);
@@ -140,11 +133,11 @@ function calledScale(cards: string[], username: string): void {
 
 			if (announce) {
 				socketIo.emit('announceScale', { username, points: scale.points, bela: false });
-			}*/
+			}
 		}
-	//  socketIo.emit('callScale', users[curGame.turn].username);
+		socketIo.emit('callScale', users[curGame.turn].username);
 	} else {
-		/* socketIo.emit('announceScale', { username, points: 0, bela: false });
+		socketIo.emit('announceScale', { username, points: 0, bela: false });
 		if (curGame.turn !== Game.dealer) {
 			const turn = curGame.nextTurn();
 	    	socketIo.emit('callScale', users[turn].username);
@@ -159,7 +152,7 @@ function calledScale(cards: string[], username: string): void {
 			socketIo.emit('gamePoints', curGame.getGamePoints());
 			const turn = curGame.turnAfterDealer();
 			socketIo.emit('playCard', users[turn].username);
-		}*/
+		}
 	}
 }
 
