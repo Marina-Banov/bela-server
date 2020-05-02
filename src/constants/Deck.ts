@@ -34,3 +34,10 @@ export const DECK = {
 	DK: new Card('DK', 4, 30),
 	DA: new Card('DA', 11, 31)
 };
+
+export const DECK_SIGNS: string[] = [
+	'H7', 'H8', 'H9', 'HX', 'HJ', 'HQ', 'HK', 'HA',
+	'C7', 'C8', 'C9', 'CX', 'CJ', 'CQ', 'CK', 'CA',
+	'S7', 'S8', 'S9', 'SX', 'SJ', 'SQ', 'SK', 'SA',
+	'D7', 'D8', 'D9', 'DX', 'DJ', 'DQ', 'DK', 'DA'
+];

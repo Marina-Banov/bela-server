@@ -112,7 +112,7 @@ function calledTrump(trump, username) {
         socketIo.emit('callScale', users[turn].username);
     }
 }
-calledScale(['C7', 'C9', 'C8'], 'marin');
+calledScale(['C7', 'C8', 'CX', 'CQ', 'CK', 'CA'], 'marin');
 function calledScale(cards, username) {
     // 	const curPriority = curGame.curScalePriority;
     console.log(cards);
@@ -120,11 +120,13 @@ function calledScale(cards, username) {
     cards.forEach(x => getCards.push(Deck_1.DECK[x]));
     getCards.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
     console.log(getCards);
+    const cardsPriority = [];
+    getCards.forEach(x => cardsPriority.push(x.scalePriority));
     if (cards.length > 0) {
-        const scale = evaluateScale_1.evaluateScale(cards);
+        const scale = evaluateScale_1.evaluateScale2(cardsPriority);
         if (scale) {
-            const s = { sign: scale.sign, points: scale.points, hand: cards, username };
-            console.log(s);
+            // const s = { sign: scale.sign, points: scale.points, hand: cards, username };
+            console.log(scale);
             /*	let announce = true;
                 const team = getPlayerTeam(users, username);
     

@@ -1,5 +1,6 @@
 import { Scale } from '../classes/Scale';
 import { SAMESIES, IN_A_ROW, COUNT_IN_A_ROW_LARGEST } from '../constants/Scales';
+import { DECK, DECK_SIGNS } from '../constants/Deck';
 
 export function evaluateScale(cards: string[]): Scale {
 	let scale = null;
@@ -43,58 +44,50 @@ export function evaluateScale(cards: string[]): Scale {
 	return scale;
 }
 
-export function evaluateScale2(cards: number[]): Scale {
-	let scales = [];
+export function evaluateScale2(cards: number[]): Scale[] {
+	const scales = [];
 
 	// ako su 4 iste vrste
-	let colorTypeMap = Array(4).fill().map(() => Array(8).fill(false));
+	const colorTypeMap = [...Array(4)].map(e => Array(8).fill(false));
 
-	cards.forEach((x) => {
-		let cardType = x & 7;
-		let cardColor = x >> 3 & 3;
+	cards.forEach(x => {
+		const cardType = x & 7;
+		const cardColor = x >> 3 & 3;
 		colorTypeMap[cardColor][cardType] = true;
 	});
 
-	let inARow = Array(4).fill(0);
+	const inARow = Array(4).fill(0);
 
-	//check for scales up to A
-	for (let t = 0; t < 8; t++)
-	{
+	const IN_A_ROW_LARGEST = JSON.parse(JSON.stringify(COUNT_IN_A_ROW_LARGEST));
+	// check for scales up to A
+	for (let t = 0; t < 8; t++) {
 		let curTypeColors = 0;
-		for (let c = 0; c < 4; c++)
-		{
-			if (colorTypeMap[c][t])
-			{
+		for (let c = 0; c < 4; c++) {
+			if (colorTypeMap[c][t]) {
 				inARow[c]++;
 				curTypeColors++;
-			}
-			else
-			{
-				if (inARow[c] >= 3)
-				{
-					let curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] - 2])));
-					curScale.sign = DECK[c << 3].sign[0] + '-' + curScale.sign + DECK[t].sign[1];
-					curScale.priority += IN_A_ROW_LARGEST[t].priority;
+			} else {
+				if (inARow[c] >= 3) {
+					const curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] + 2]));
+					curScale.sign = DECK_SIGNS[c << 3][0] + '-' + curScale.sign + IN_A_ROW_LARGEST[t-1].sign;
+					curScale.priority = IN_A_ROW_LARGEST[t].priority;
 					scales.push(curScale);
 				}
 				inARow[c] = 1;
 			}
 		}
-		if (curTypeColors == 4)
-		{
-			let curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK[t].sign[1])));
+		if (curTypeColors === 4) {
+			const curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[t][1])));
 			scales.push(curScale);
 		}
 	}
 
-	//loop above wont take care of scales that include A so it needs to be fixed by this for
-	for (let c = 0; c < 4; c++)
-	{
-		if (inARow[c] >= 3)
-		{
-			let curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] - 2])));
-			curScale.sign = DECK[c << 3].sign[0] + '-' + curScale.sign + DECK[7].sign[1];
-			curScale.priority += IN_A_ROW_LARGEST[t].priority;
+	// loop above wont take care of scales that include A so it needs to be fixed by this for
+	for (let c = 0; c < 4; c++) {
+		if (inARow[c] >= 3) {
+			const curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] - 2]));
+			curScale.sign = DECK_SIGNS[c << 3][0] + '-' + curScale.sign + '-upto-A';
+			curScale.priority = IN_A_ROW_LARGEST[7].priority;
 			scales.push(curScale);
 		}
 	}
