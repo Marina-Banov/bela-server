@@ -17,14 +17,14 @@ exports.IN_A_ROW = [
     new Scale_1.Scale('count-4', 50, 200),
     new Scale_1.Scale('count-3', 20, 500)
 ];
-exports.COUNT_IN_A_ROW_LARGEST = {
-    '-upto-7': { value: false, priority: 5 },
-    '-upto-8': { value: false, priority: 5 },
-    '-upto-9': { value: false, priority: 5 },
-    '-upto-X': { value: false, priority: 4 },
-    '-upto-J': { value: false, priority: 3 },
-    '-upto-Q': { value: false, priority: 2 },
-    '-upto-K': { value: false, priority: 1 },
-    '-upto-A': { value: false, priority: 0 }
-};
+exports.COUNT_IN_A_ROW_LARGEST = [
+    { sign: '-upto-7', value: false, priority: 5 },
+    { sign: '-upto-8', value: false, priority: 5 },
+    { sign: '-upto-9', value: false, priority: 5 },
+    { sign: '-upto-X', value: false, priority: 4 },
+    { sign: '-upto-J', value: false, priority: 3 },
+    { sign: '-upto-Q', value: false, priority: 2 },
+    { sign: '-upto-K', value: false, priority: 1 },
+    { sign: '-upto-A', value: false, priority: 0 }
+];
 //# sourceMappingURL=Scales.js.map

@@ -2,11 +2,12 @@ import { Match } from './classes/Match';
 import { Game } from './classes/Game';
 import { Player } from './classes/Player';
 import { getUsernames, getTeams, getPlayerTeam } from './functions/playerHelperFunctions';
-import { evaluateScale } from './functions/evaluateScale';
+import { evaluateScale, evaluateScale2 } from './functions/evaluateScale';
 import { evaluatePlay } from './functions/evaluatePlay';
 import express from 'express';
 import * as http from 'http';
 import * as io from 'socket.io';
+import { DECK } from './constants/Deck';
 
 const connections: any[] = [];
 let match: Match;
@@ -20,7 +21,7 @@ app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
 
 const httpServer = http.createServer(app);
 const port = process.env.PORT || 80;
-httpServer.listen(port, () => console.log('listening on *:', port));
+// httpServer.listen(port, () => console.log('listening on *:', port));
 
 const socketIo = io.listen(httpServer);
 socketIo.on('connection', socket => {
@@ -113,17 +114,26 @@ function calledTrump(trump: string, username: string): void {
 	}
 }
 
+calledScale([ 'C7', 'C8', 'CX', 'CQ', 'CK', 'CA' ], 'marin');
+
 function calledScale(cards: string[], username: string): void {
-	const curPriority = curGame.curScalePriority;
+// 	const curPriority = curGame.curScalePriority;
+
+	console.log(cards);
+	const getCards = [];
+	cards.forEach(x => getCards.push(DECK[x]));
+	getCards.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
+	console.log(getCards);
+	const cardsPriority = [];
+	getCards.forEach(x => cardsPriority.push(x.scalePriority));
 
 	if (cards.length > 0) {
-		const scale = evaluateScale(cards);
+		const scale = evaluateScale2(cardsPriority);
 		if (scale) {
-			let announce = true;
-			const s = { sign: scale.sign, points: scale.points, hand: cards, username };
+			// const s = { sign: scale.sign, points: scale.points, hand: cards, username };
+			console.log(scale);
+		/*	let announce = true;
 			const team = getPlayerTeam(users, username);
-			cards = [];
-			getCards.forEach(x => cards.push(x.scalePriority));
 
 			if (team === 'A') {
 				announce = match.teamA.addScale(s, scale.priority, curPriority);
@@ -133,11 +143,11 @@ function calledScale(cards: string[], username: string): void {
 
 			if (announce) {
 				socketIo.emit('announceScale', { username, points: scale.points, bela: false });
-			}
+			}*/
 		}
-		socketIo.emit('callScale', users[curGame.turn].username);
+		//  socketIo.emit('callScale', users[curGame.turn].username);
 	} else {
-		socketIo.emit('announceScale', { username, points: 0, bela: false });
+		/* socketIo.emit('announceScale', { username, points: 0, bela: false });
 		if (curGame.turn !== Game.dealer) {
 			const turn = curGame.nextTurn();
 	    	socketIo.emit('callScale', users[turn].username);
@@ -152,7 +162,7 @@ function calledScale(cards: string[], username: string): void {
 			socketIo.emit('gamePoints', curGame.getGamePoints());
 			const turn = curGame.turnAfterDealer();
 			socketIo.emit('playCard', users[turn].username);
-		}
+		}*/
 	}
 }
 
