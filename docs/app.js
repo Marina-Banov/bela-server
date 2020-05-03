@@ -19,7 +19,6 @@ const evaluatePlay_1 = require("./functions/evaluatePlay");
 const express_1 = __importDefault(require("express"));
 const http = __importStar(require("http"));
 const io = __importStar(require("socket.io"));
-const Deck_1 = require("./constants/Deck");
 const connections = [];
 let match;
 let curGame;
@@ -115,19 +114,14 @@ function calledTrump(trump, username) {
 function calledScale(cards, username) {
     let announcePoints = 0;
     if (cards.length !== 0) {
-        const getCards = [];
-        cards.forEach(x => getCards.push(Deck_1.DECK[x]));
-        getCards.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
-        const cardsPriority = [];
-        getCards.forEach(x => cardsPriority.push(x.scalePriority));
-        const scales = evaluateScale_1.evaluateScale2(cardsPriority);
+        const scales = evaluateScale_1.evaluateScale(cards);
         if (!scales) {
             socketIo.emit('cardNotAllowed', username);
             socketIo.emit('callScale', username);
             return;
         }
-        announcePoints = (playerHelperFunctions_1.getPlayerTeam(users, username) === 'A') ? match.teamA.addScale2(scales, curGame.curScalePriority, username)
-            : match.teamB.addScale2(scales, curGame.curScalePriority, username);
+        announcePoints = (playerHelperFunctions_1.getPlayerTeam(users, username) === 'A') ? match.teamA.addScale(scales, curGame.curScalePriority, username)
+            : match.teamB.addScale(scales, curGame.curScalePriority, username);
     }
     socketIo.emit('announceScale', { username, points: announcePoints, bela: false });
     if (curGame.turn !== Game_1.Game.dealer) {
