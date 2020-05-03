@@ -1,6 +1,6 @@
 import { Scale } from '../classes/Scale';
 import { SAMESIES, IN_A_ROW, COUNT_IN_A_ROW_LARGEST } from '../constants/Scales';
-import { DECK, DECK_SIGNS } from '../constants/Deck';
+import { DECK_SIGNS } from '../constants/Deck';
 
 export function evaluateScale(cards: string[]): Scale {
 	let scale = null;
@@ -46,7 +46,7 @@ export function evaluateScale(cards: string[]): Scale {
 
 export function evaluateScale2(cards: number[]): Scale[] {
 	// ako su 4 iste vrste
-	const colorTypeMap = [...Array(4)].map(e => Array(8).fill(false));
+	const colorTypeMap = [...Array(4)].map(() => Array(8).fill(false));
 
 	cards.forEach(x => {
 		const cardType = x & 7;
@@ -82,26 +82,19 @@ export function evaluateScale2(cards: number[]): Scale[] {
 		}
 	}
 
-	for (let c = 0; c < cards.length; c++)
-	{
+	for (const c of cards) {
 		let cardInRange = false;
-		for (let i = 0; i < scalesInternal.length; i++)
-		{
-			const cardType = cards[c] & 7;
-			const cardColor = cards[c] >> 3 & 3;
-			if (scalesInternal[i].count > 8)
-			{
-				if (cardType === scalesInternal[i].top)
-				{
+		for (const s of scalesInternal) {
+			const cardType = c & 7;
+			const cardColor = c >> 3 & 3;
+			if (s.count > 8) {
+				if (cardType === s.top) {
 					cardInRange = true;
 					break;
 				}
-			}
-			else
-			{
-				const firstCard = scalesInternal[i].top - scalesInternal[i].count + 1;
-				if (cardColor == scalesInternal[i].color && cardType >= firstCard && cardType <= scalesInternal[i].top)
-				{
+			} else {
+				const firstCard = s.top - s.count + 1;
+				if (cardColor === s.color && cardType >= firstCard && cardType <= s.top) {
 					cardInRange = true;
 					break;
 				}
@@ -113,22 +106,20 @@ export function evaluateScale2(cards: number[]): Scale[] {
 
 	const scales = [];
 
-	for (let i = 0; i < scalesInternal.length; i++)
-	{
-		const scale = scalesInternal[i];
+	for (const s of scalesInternal) {
+		const scale = s;
 		const cardList = [];
 
-		if (scale.count > 8)
-		{
-			const curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[scale.top][1])));
+		if (scale.count > 8) {
+			const c = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[scale.top][1])));
+			const curScale = new Scale(c.sign, c.points, c.priority);
 			for (let j = scale.top; j < 32; j += 8)
 				cardList.push(DECK_SIGNS[j]);
 			curScale.defineCards(cardList);
 			scales.push(curScale);
-		}
-		else
-		{
-			const curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - scale.count + 2]));
+		} else {
+			const c = JSON.parse(JSON.stringify(IN_A_ROW[6 - scale.count + 2]));
+			const curScale = new Scale(c.sign, c.points, c.priority);
 			curScale.sign = DECK_SIGNS[scale.color << 3][0] + '-' + curScale.sign + IN_A_ROW_LARGEST[scale.top].sign;
 			curScale.priority += IN_A_ROW_LARGEST[scale.top].priority;
 

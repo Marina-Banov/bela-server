@@ -1,4 +1,4 @@
-import { DECK } from '../constants/Deck';
+import { DECK, DECK_SIGNS } from '../constants/Deck';
 import { Player } from './Player';
 import { Team } from './Team';
 import { Card } from './Card';
@@ -19,17 +19,13 @@ export class Game {
 	constructor() {
 		Game.dealer = (Game.dealer === undefined) ? 0 : (Game.dealer + 1) % 4;
 		this.turnAfterDealer();
-		this.availableCards = [];
-		for (let i = 0; i < 32; i++) {
-			this.availableCards.push(i);
-		}
+		this.availableCards = JSON.parse(JSON.stringify(DECK_SIGNS));
 		this.trump = {
 			sign: '',
 			team: ''
 		};
 		this.curScalePriority = {
 			team: '',
-			usernames: [],
 			value: 100000
 		};
 		this.pointsA = 0;
