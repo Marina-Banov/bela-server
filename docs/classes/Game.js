@@ -5,7 +5,7 @@ class Game {
     constructor() {
         Game.dealer = (Game.dealer === undefined) ? 0 : (Game.dealer + 1) % 4;
         this.turnAfterDealer();
-        this.availableCards = JSON.parse(JSON.stringify(Deck_1.DECK_SIGNS));
+        this.availableCards = [...Array(32).keys()];
         this.trump = {
             sign: '',
             team: ''

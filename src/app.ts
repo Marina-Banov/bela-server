@@ -2,12 +2,11 @@ import { Match } from './classes/Match';
 import { Game } from './classes/Game';
 import { Player } from './classes/Player';
 import { getUsernames, getTeams, getPlayerTeam } from './functions/playerHelperFunctions';
-import { evaluateScale2 } from './functions/evaluateScale';
+import { evaluateScale } from './functions/evaluateScale';
 import { evaluatePlay } from './functions/evaluatePlay';
 import express from 'express';
 import * as http from 'http';
 import * as io from 'socket.io';
-import { DECK } from './constants/Deck';
 
 const connections: any[] = [];
 let match: Match;
@@ -118,21 +117,16 @@ function calledScale(cards: string[], username: string): void {
 	let announcePoints = 0;
 
 	if (cards.length !== 0) {
-		const getCards = [];
-		cards.forEach(x => getCards.push(DECK[x]));
-		getCards.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
-		const cardsPriority = [];
-		getCards.forEach(x => cardsPriority.push(x.scalePriority));
+		const scales = evaluateScale(cards);
 
-		const scales = evaluateScale2(cardsPriority);
 		if (!scales) {
 			socketIo.emit('cardNotAllowed', username);
 			socketIo.emit('callScale', username);
 			return;
 		}
 
-		announcePoints = (getPlayerTeam(users, username) === 'A') ? match.teamA.addScale2(scales, curGame.curScalePriority, username)
-																  : match.teamB.addScale2(scales, curGame.curScalePriority, username);
+		announcePoints = (getPlayerTeam(users, username) === 'A') ? match.teamA.addScale(scales, curGame.curScalePriority, username)
+																  : match.teamB.addScale(scales, curGame.curScalePriority, username);
 	}
 
 	socketIo.emit('announceScale', { username, points: announcePoints, bela: false });
