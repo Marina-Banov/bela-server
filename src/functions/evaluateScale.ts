@@ -45,8 +45,6 @@ export function evaluateScale(cards: string[]): Scale {
 }
 
 export function evaluateScale2(cards: number[]): Scale[] {
-	const scales = [];
-
 	// ako su 4 iste vrste
 	const colorTypeMap = [...Array(4)].map(e => Array(8).fill(false));
 
@@ -68,30 +66,18 @@ export function evaluateScale2(cards: number[]): Scale[] {
 				inARow[c]++;
 				curTypeColors++;
 			} else {
-				if (inARow[c] >= 3) {
-					const curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] + 2]));
-					curScale.sign = DECK_SIGNS[c << 3][0] + '-' + curScale.sign + IN_A_ROW_LARGEST[t-1].sign;
-					curScale.priority += IN_A_ROW_LARGEST[t].priority;
-					scales.push(curScale);
+				if (inARow[c] >= 3)
 					scalesInternal.push({ count: inARow[c], top: t - 1, color: c});
-				}
 				inARow[c] = 0;
 			}
 		}
-		if (curTypeColors === 4) {
-			const curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[t][1])));
-			scales.push(curScale);
+		if (curTypeColors === 4)
 			scalesInternal.push({ count: 420, top: t, color: 0});
-		}
 	}
 
 	// loop above wont take care of scales that include A so it needs to be fixed by this for
 	for (let c = 0; c < 4; c++) {
 		if (inARow[c] >= 3) {
-			const curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - inARow[c] + 2]));
-			curScale.sign = DECK_SIGNS[c << 3][0] + '-' + curScale.sign + '-upto-A';
-			curScale.priority += IN_A_ROW_LARGEST[7].priority;
-			scales.push(curScale);
 			scalesInternal.push({ count: inARow[c], top: 7, color: c});
 		}
 	}
@@ -123,6 +109,35 @@ export function evaluateScale2(cards: number[]): Scale[] {
 		}
 		if (!cardInRange)
 			return null;
+	}
+
+	const scales = [];
+
+	for (let i = 0; i < scalesInternal.length; i++)
+	{
+		const scale = scalesInternal[i];
+		const cardList = [];
+
+		if (scale.count > 8)
+		{
+			const curScale = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[scale.top][1])));
+			for (let j = scale.top; j < 32; j += 8)
+				cardList.push(DECK_SIGNS[j]);
+			curScale.defineCards(cardList);
+			scales.push(curScale);
+		}
+		else
+		{
+			const curScale = JSON.parse(JSON.stringify(IN_A_ROW[6 - scale.count + 2]));
+			curScale.sign = DECK_SIGNS[scale.color << 3][0] + '-' + curScale.sign + IN_A_ROW_LARGEST[scale.top].sign;
+			curScale.priority += IN_A_ROW_LARGEST[scale.top].priority;
+
+			const last = scale.top | scale.color << 3;
+			for (let j = last - scale.count + 1; j <= last; j++)
+				cardList.push(DECK_SIGNS[j]);
+			curScale.defineCards(cardList);
+			scales.push(curScale);
+		}
 	}
 
 	return scales;
