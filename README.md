@@ -48,9 +48,9 @@ description: the first element of data.games is the result of the most recent ga
 data: string  
 description: data is the username of player whose turn it is to play a card.
 
-- cardNotAllowed  
+- moveNotAllowed  
 data: string  
-description: data is the username of player who chose an illegal card move.
+description: data is the username of player who chose an illegal card move or called an illegal scale.
 
 - acceptCard  
 data: { username: string, card: string }  

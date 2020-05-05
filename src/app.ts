@@ -120,7 +120,7 @@ function calledScale(cards: string[], username: string): void {
 		const scales = evaluateScale(cards);
 
 		if (!scales) {
-			socketIo.emit('cardNotAllowed', username);
+			socketIo.emit('moveNotAllowed', username);
 			socketIo.emit('callScale', username);
 			return;
 		}
@@ -149,7 +149,7 @@ function cardPlayed(card: string, username: string): void {
 	const user = users.find(x => x.username === username);
 
 	if (!curGame.isPlayValid(card, user)) {
-		socketIo.emit('cardNotAllowed', username);
+		socketIo.emit('moveNotAllowed', username);
 		return;
 	}
 
@@ -157,63 +157,64 @@ function cardPlayed(card: string, username: string): void {
 	socketIo.emit('acceptCard', { username, card });
 	socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: true });
 
-	if (curGame.nextTurn() === curGame.firstToPlay) {
-		const points = evaluatePlay(curGame.cardsOnTable);
-		if (user.hand.length === 0) {
-			points.value += 10;
-			if (!curGame.tookCardsA || !curGame.tookCardsB) {
-				points.value += 90;
-			}
-			if (curGame.pointsA && !curGame.tookCardsA) {
-				curGame.pointsB += curGame.pointsA;
-				curGame.pointsA = 0;
-			} else if (curGame.pointsB && !curGame.tookCardsB) {
-				curGame.pointsA += curGame.pointsB;
-				curGame.pointsB = 0;
-			}
-		}
-
-		const team = getPlayerTeam(users, points.username);
-		if (team === 'A') {
-			curGame.pointsA += points.value;
-			curGame.tookCardsA = true;
-		} else {
-			curGame.pointsB += points.value;
-			curGame.tookCardsB = true;
-		}
-
-		if (user.hand.length !== 0) {
-			setTimeout(() => {
-				socketIo.emit('gamePoints', curGame.getGamePoints());
-				curGame.firstToPlay = users.indexOf(users.find(x => x.username === points.username));
-				curGame.turn = curGame.firstToPlay;
-				curGame.cardsOnTable = [];
-				socketIo.emit('playCard', users[curGame.turn].username);
-			}, 2000);
-		} else {
-			if (curGame.checkForFail()) {
-				socketIo.emit('fail', curGame.trump.team);
-			}
-			setTimeout(() => {
-				curGame = match.startNewGame();
-				const matchPoints =  match.getMatchPoints();
-				socketIo.emit('matchPoints', matchPoints);
-				const winnerTeam = match.endMatch(matchPoints.total);
-				if (winnerTeam) {
-					setTimeout(() => {
-						socketIo.emit('endMatch', winnerTeam);
-					}, 1000);
-				} else {
-					users.forEach(u => {
-						u.hand = curGame.dealCards();
-						socketIo.emit('hand', { username: u.username, hand: u.getOnlyCardSigns(), display8: false });
-					});
-					socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
-				}
-			}, 2000);
-		}
-	} else {
+	if (curGame.nextTurn() !== curGame.firstToPlay) {
 		socketIo.emit('playCard', users[curGame.turn].username);
+		return;
+	}
+
+	const points = evaluatePlay(curGame.cardsOnTable);
+	if (user.hand.length === 0) {
+		points.value += 10;
+		if (!curGame.tookCardsA || !curGame.tookCardsB) {
+			points.value += 90;
+		}
+		if (curGame.pointsA && !curGame.tookCardsA) {
+			curGame.pointsB += curGame.pointsA;
+			curGame.pointsA = 0;
+		} else if (curGame.pointsB && !curGame.tookCardsB) {
+			curGame.pointsA += curGame.pointsB;
+			curGame.pointsB = 0;
+		}
+	}
+
+	const team = getPlayerTeam(users, points.username);
+	if (team === 'A') {
+		curGame.pointsA += points.value;
+		curGame.tookCardsA = true;
+	} else {
+		curGame.pointsB += points.value;
+		curGame.tookCardsB = true;
+	}
+
+	if (user.hand.length !== 0) {
+		setTimeout(() => {
+			socketIo.emit('gamePoints', curGame.getGamePoints());
+			curGame.firstToPlay = users.indexOf(users.find(x => x.username === points.username));
+			curGame.turn = curGame.firstToPlay;
+			curGame.cardsOnTable = [];
+			socketIo.emit('playCard', users[curGame.turn].username);
+		}, 2000);
+	} else {
+		if (curGame.checkForFail()) {
+			socketIo.emit('fail', curGame.trump.team);
+		}
+		setTimeout(() => {
+			curGame = match.startNewGame();
+			const matchPoints =  match.getMatchPoints();
+			socketIo.emit('matchPoints', matchPoints);
+			const winnerTeam = match.endMatch(matchPoints.total);
+			if (winnerTeam) {
+				setTimeout(() => {
+					socketIo.emit('endMatch', winnerTeam);
+				}, 1000);
+			} else {
+				users.forEach(u => {
+					u.hand = curGame.dealCards();
+					socketIo.emit('hand', { username: u.username, hand: u.getOnlyCardSigns(), display8: false });
+				});
+				socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
+			}
+		}, 2000);
 	}
 }
 

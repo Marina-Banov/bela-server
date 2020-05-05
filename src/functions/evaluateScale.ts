@@ -28,9 +28,14 @@ export function evaluateScale(cards: string[]): Scale[] {
 			}
 		}
 
-		if (curTypeColors === 4 && t > 1) {
+		if (curTypeColors === 4) {
 			scalesInternal.push({ count: null, top: t, color: null });
 		}
+	}
+
+	// raise warning for scales 4*7 and 4*8
+	if (scalesInternal.find(x => x.color === null && x.top <= 1)) {
+		return null;
 	}
 
 	// defining if the user called a card that isn't a part of any of the scales - should raise a warning
