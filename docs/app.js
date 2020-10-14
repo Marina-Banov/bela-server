@@ -87,6 +87,9 @@ function newUser(username) {
             socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
         }, 2000);
     }
+    else {
+        socketIo.emit('updateUsers', { usernames: playerHelperFunctions_1.getUsernames(users), teams: null });
+    }
 }
 function calledTrump(trump, username) {
     if (trump === '') {
