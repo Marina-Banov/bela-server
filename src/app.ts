@@ -88,6 +88,8 @@ function newUser(username: string): void {
 		setTimeout(() => {
 			socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
 		}, 2000);
+	} else {
+		socketIo.emit('updateUsers', { usernames: getUsernames(users), teams: null });
 	}
 }
 

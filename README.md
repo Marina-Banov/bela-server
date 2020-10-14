@@ -10,7 +10,7 @@ description: data.hand is the set of 8 card codes assigned to player with data.u
 
 - updateUsernames  
 data: { usernames: string[], teams: { A: string[], B: string[] } }  
-description: Emitted once all the players have joined the game room.
+description: Emitted when a player joins the game room.
 
 - callTrump  
 data: { username: string, lastCall: boolean }  
