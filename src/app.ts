@@ -14,7 +14,6 @@ let curGame: Game;
 const users: Player[] = [];
 
 
-
 const app = express();
 app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
 
@@ -22,6 +21,7 @@ const httpServer = http.createServer(app);
 const port = process.env.PORT || 80;
 httpServer.listen(port, () => console.log('listening on *:', port));
 
+io.set('origins', '*:*');
 const socketIo = io.listen(httpServer);
 socketIo.on('connection', socket => {
 
