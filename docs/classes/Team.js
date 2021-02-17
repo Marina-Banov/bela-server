@@ -4,29 +4,16 @@ class Team {
     constructor(name) {
         this.name = name;
         this.users = [];
-        this.priority = 1000;
         this.scales = [];
     }
-    addScale(scale, priority, curPriority) {
-        if (this.scales.find(x => x.sign === scale.sign)) {
-            return false;
-        }
-        if (priority < curPriority.value) {
+    addScale(scales, curPriority, username) {
+        const minPriority = Math.min.apply(Math, scales.map(x => x.priority));
+        if (minPriority < curPriority.value) {
             curPriority.team = this.name;
-            curPriority.value = priority;
+            curPriority.value = minPriority;
         }
-        this.scales.push(scale);
-        if (priority < this.priority) {
-            // TODO DODATI NAPOMENU NA FRONTENDU DA SE PRVO ZOVE NAJVEĆE ZVANJE
-            // PAMETNI LJUDI BI FIXALI TAJ BUG ALI JA CU GA IMPLEMENTIRATI
-            this.priority = priority;
-            return true;
-        }
-        if (!curPriority.usernames.find(x => x === scale.username)) {
-            curPriority.usernames.push(scale.username);
-            return true;
-        }
-        return false;
+        scales.forEach(s => this.scales.push({ sign: s.sign, points: s.points, hand: s.cardSymbols, username }));
+        return Math.max.apply(Math, scales.map(x => x.points));
     }
     getScales() {
         const hands = [];

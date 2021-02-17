@@ -5,17 +5,13 @@ class Game {
     constructor() {
         Game.dealer = (Game.dealer === undefined) ? 0 : (Game.dealer + 1) % 4;
         this.turnAfterDealer();
-        this.availableCards = [];
-        for (let i = 0; i < 32; i++) {
-            this.availableCards.push(i);
-        }
+        this.availableCards = [...Array(32).keys()];
         this.trump = {
             sign: '',
             team: ''
         };
         this.curScalePriority = {
             team: '',
-            usernames: [],
             value: 100000
         };
         this.pointsA = 0;

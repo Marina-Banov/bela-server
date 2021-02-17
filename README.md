@@ -10,7 +10,7 @@ description: data.hand is the set of 8 card codes assigned to player with data.u
 
 - updateUsernames  
 data: { usernames: string[], teams: { A: string[], B: string[] } }  
-description: Emitted once all the players have joined the game room.
+description: Emitted when a player joins the game room.
 
 - callTrump  
 data: { username: string, lastCall: boolean }  
@@ -48,9 +48,9 @@ description: the first element of data.games is the result of the most recent ga
 data: string  
 description: data is the username of player whose turn it is to play a card.
 
-- cardNotAllowed  
+- moveNotAllowed  
 data: string  
-description: data is the username of player who chose an illegal card move.
+description: data is the username of player who chose an illegal card move or called an illegal scale.
 
 - acceptCard  
 data: { username: string, card: string }  

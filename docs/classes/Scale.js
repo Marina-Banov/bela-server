@@ -6,6 +6,9 @@ class Scale {
         this.points = points;
         this.priority = priority;
     }
+    defineCards(cardSymbols) {
+        this.cardSymbols = cardSymbols;
+    }
 }
 exports.Scale = Scale;
 //# sourceMappingURL=Scale.js.map
