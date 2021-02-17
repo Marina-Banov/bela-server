@@ -28,7 +28,7 @@ app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
 const httpServer = http.createServer(app);
 const port = process.env.PORT || 80;
 httpServer.listen(port, () => console.log('listening on *:', port));
-const socketIo = io.listen(httpServer);
+const socketIo = io.listen(httpServer, { origins: '*:*' });
 socketIo.on('connection', socket => {
     connect(socket);
     socket.on('newUser', (username) => {
