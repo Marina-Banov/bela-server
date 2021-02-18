@@ -1,13 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Scale = void 0;
 class Scale {
     constructor(sign, points, priority) {
         this.sign = sign;
         this.points = points;
         this.priority = priority;
-    }
-    defineCards(cardSymbols) {
-        this.cardSymbols = cardSymbols;
     }
 }
 exports.Scale = Scale;

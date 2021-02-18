@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.COUNT_IN_A_ROW_LARGEST = exports.IN_A_ROW = exports.SAMESIES = void 0;
 const Scale_1 = require("../classes/Scale");
 exports.SAMESIES = [
     new Scale_1.Scale('J', 200, 1),

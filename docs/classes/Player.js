@@ -1,12 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Player = void 0;
 class Player {
-    constructor(username, hand) {
+    constructor(id, username, hand) {
+        this.id = id;
         this.username = username;
         this.hand = hand;
-        this.team = (Player.count % 2) ? 'B' : 'A';
         this.bela = false;
-        Player.count++;
     }
     getOnlyCardSigns() {
         if (this.hand === null) {
@@ -18,13 +18,10 @@ class Player {
         });
         return cards;
     }
-    checkBela(sign) {
-        if (this.bela) {
-            const trump = this.hand.find(x => x.sign === sign).trump;
-            if (trump && (sign[1] === 'Q' || sign[1] === 'K')) {
-                this.bela = false;
-                return true;
-            }
+    checkBela(card) {
+        if (this.bela && card.trump && (card.sign[1] === 'Q' || card.sign[1] === 'K')) {
+            this.bela = false;
+            return true;
         }
         return false;
     }
@@ -33,5 +30,4 @@ class Player {
     }
 }
 exports.Player = Player;
-Player.count = 0;
 //# sourceMappingURL=Player.js.map

@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.DECK = void 0;
 const Card_1 = require("../classes/Card");
 exports.DECK = [
     new Card_1.Card('H7', 0, 0),

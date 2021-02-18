@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.evaluateScale = void 0;
 const Scale_1 = require("../classes/Scale");
 const Scales_1 = require("../constants/Scales");
 const Deck_1 = require("../constants/Deck");
@@ -12,7 +13,7 @@ function evaluateScale(cards) {
     for (let t = 0; t < 8; t++) {
         let curTypeColors = 0;
         for (let c = 0; c < 4; c++) {
-            if (cardsIndices.find(x => x === c * 8 + t)) {
+            if (cardsIndices.find(x => x === c * 8 + t) !== undefined) {
                 inARow[c]++;
                 curTypeColors++;
                 if (t === 7 && inARow[c] >= 3) {
@@ -65,14 +66,14 @@ function evaluateScale(cards) {
         if (s.color === null) {
             const c = JSON.parse(JSON.stringify(Scales_1.SAMESIES.find(x => x.sign === DECK_SIGNS[s.top][1])));
             const curScale = new Scale_1.Scale(c.sign, c.points, c.priority);
-            curScale.defineCards(cards.filter(x => x.includes(DECK_SIGNS[s.top][1])));
+            curScale.cardSymbols = cards.filter(x => x.includes(DECK_SIGNS[s.top][1]));
             scales.push(curScale);
         }
         else {
             const c = JSON.parse(JSON.stringify(Scales_1.IN_A_ROW[8 - s.count]));
             const curScale = new Scale_1.Scale(DECK_SIGNS[s.color * 8][0] + '-count-' + s.count + '-upto-' + DECK_SIGNS[s.top][1], c.points, c.priority + IN_A_ROW_LARGEST[s.top].priority);
             const last = s.color * 8 + s.top + 1;
-            curScale.defineCards(DECK_SIGNS.slice(last - s.count, last));
+            curScale.cardSymbols = DECK_SIGNS.slice(last - s.count, last);
             scales.push(curScale);
         }
     }

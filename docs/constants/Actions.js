@@ -1,0 +1,34 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ClientMessage = exports.ACTIONS = void 0;
+var ACTIONS;
+(function (ACTIONS) {
+    ACTIONS["ACCEPT_CARD"] = "ACCEPT_CARD";
+    ACTIONS["ANNOUNCE_SCALE"] = "ANNOUNCE_SCALE";
+    ACTIONS["ARRANGE_USERS"] = "ARRANGE_USERS";
+    ACTIONS["CALL_BELA"] = "CALL_BELA";
+    ACTIONS["CALLED_BELA"] = "CALLED_BELA";
+    ACTIONS["CALL_SCALE"] = "CALL_SCALE";
+    ACTIONS["CALLED_SCALE"] = "CALLED_SCALE";
+    ACTIONS["CALL_TRUMP"] = "CALL_TRUMP";
+    ACTIONS["CALLED_TRUMP"] = "CALLED_TRUMP";
+    ACTIONS["DISCARDED"] = "DISCARDED";
+    ACTIONS["GAME_POINTS"] = "GAME_POINTS";
+    ACTIONS["INFO"] = "INFO";
+    ACTIONS["INFO_WAITING"] = "INFO_WAITING";
+    ACTIONS["JOIN_ROOM"] = "JOIN_ROOM";
+    ACTIONS["KILLED_MATCH"] = "KILLED_MATCH";
+    ACTIONS["MATCH_POINTS"] = "MATCH_POINTS";
+    ACTIONS["NO_ROOM"] = "NO_ROOM";
+    ACTIONS["PLAY_CARD"] = "PLAY_CARD";
+    ACTIONS["PLAYED_CARD"] = "PLAYED_CARD";
+    ACTIONS["REORDER_PLAYERS"] = "REORDER_PLAYERS";
+    ACTIONS["SET_HAND"] = "SET_HAND";
+    ACTIONS["SET_TRUMP"] = "SET_TRUMP";
+    ACTIONS["SHOW_SCALES"] = "SHOW_SCALES";
+    ACTIONS["UPDATE_USERS"] = "UPDATE_USERS";
+})(ACTIONS = exports.ACTIONS || (exports.ACTIONS = {}));
+class ClientMessage {
+}
+exports.ClientMessage = ClientMessage;
+//# sourceMappingURL=Actions.js.map

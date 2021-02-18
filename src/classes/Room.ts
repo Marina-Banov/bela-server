@@ -24,7 +24,7 @@ export class Room {
             return null;
         }
         if (!hand) {
-            hand = this.curGame.dealCards()
+            hand = this.curGame.dealCards();
         }
         const user = new Player(id, username, hand);
         this.users.push(user);
