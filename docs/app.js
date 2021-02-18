@@ -2,13 +2,6 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const Match_1 = require("./classes/Match");
 const Game_1 = require("./classes/Game");
@@ -17,18 +10,25 @@ const playerHelperFunctions_1 = require("./functions/playerHelperFunctions");
 const evaluateScale_1 = require("./functions/evaluateScale");
 const evaluatePlay_1 = require("./functions/evaluatePlay");
 const express_1 = __importDefault(require("express"));
-const http = __importStar(require("http"));
-const io = __importStar(require("socket.io"));
+const http_1 = require("http");
+const socket_io_1 = require("socket.io");
 const connections = [];
 let match;
 let curGame;
 const users = [];
 const app = express_1.default();
 app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
-const httpServer = http.createServer(app);
+const httpServer = http_1.createServer(app);
 const port = process.env.PORT || 80;
 httpServer.listen(port, () => console.log('listening on *:', port));
-const socketIo = io.listen(httpServer, { origins: '*:*' });
+const socketIo = new socket_io_1.Server(httpServer, {
+    cors: {
+        origin: ['https://marina-banov.github.io', 'http://localhost:4200'],
+        methods: ['GET', 'POST'],
+        allowedHeaders: [''],
+        credentials: true
+    }
+});
 socketIo.on('connection', socket => {
     connect(socket);
     socket.on('newUser', (username) => {

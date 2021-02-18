@@ -5,8 +5,8 @@ import { getUsernames, getTeams, getPlayerTeam } from './functions/playerHelperF
 import { evaluateScale } from './functions/evaluateScale';
 import { evaluatePlay } from './functions/evaluatePlay';
 import express from 'express';
-import * as http from 'http';
-import * as io from 'socket.io';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 const connections: any[] = [];
 let match: Match;
@@ -17,11 +17,18 @@ const users: Player[] = [];
 const app = express();
 app.get('/', (req, res) => res.send('<h1>Hello world</h1>'));
 
-const httpServer = http.createServer(app);
+const httpServer = createServer(app);
 const port = process.env.PORT || 80;
 httpServer.listen(port, () => console.log('listening on *:', port));
 
-const socketIo = io.listen(httpServer, { origins: '*:*' });
+const socketIo = new Server(httpServer, {
+  cors: {
+    origin: ['https://marina-banov.github.io', 'http://localhost:4200'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: [''],
+    credentials: true
+  }
+});
 socketIo.on('connection', socket => {
 
 	connect(socket);
