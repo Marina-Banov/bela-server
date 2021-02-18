@@ -14,7 +14,7 @@ export function evaluateScale(cards: string[]): Scale[] {
 		let curTypeColors = 0;
 
 		for (let c = 0; c < 4; c++) {
-			if (cardsIndices.find(x => x === c*8 + t)) {
+			if (cardsIndices.find(x => x === c*8 + t) !== undefined) {
 				inARow[c]++;
 				curTypeColors++;
 				if (t === 7 && inARow[c] >= 3) {
@@ -71,7 +71,7 @@ export function evaluateScale(cards: string[]): Scale[] {
 		if (s.color === null) {
 			const c = JSON.parse(JSON.stringify(SAMESIES.find(x => x.sign === DECK_SIGNS[s.top][1])));
 			const curScale = new Scale(c.sign, c.points, c.priority);
-			curScale.defineCards(cards.filter(x => x.includes(DECK_SIGNS[s.top][1])));
+			curScale.cardSymbols = cards.filter(x => x.includes(DECK_SIGNS[s.top][1]));
 			scales.push(curScale);
 		} else {
 			const c = JSON.parse(JSON.stringify(IN_A_ROW[8 - s.count]));
@@ -80,7 +80,7 @@ export function evaluateScale(cards: string[]): Scale[] {
 										c.priority + IN_A_ROW_LARGEST[s.top].priority);
 
 			const last =  s.color * 8 + s.top + 1;
-			curScale.defineCards(DECK_SIGNS.slice(last - s.count, last));
+			curScale.cardSymbols = DECK_SIGNS.slice(last - s.count, last);
 			scales.push(curScale);
 		}
 	}

@@ -1,18 +1,16 @@
 import { Card } from './Card';
 
 export class Player {
+	id: string;
 	username: string;
 	hand: Card[];
-	team: string;
 	bela: boolean;
-	static count: number = 0;
 
-	constructor(username: string, hand: Card[]) {
+	constructor(id: string, username: string, hand: Card[]) {
+		this.id = id;
 		this.username = username;
 		this.hand = hand;
-		this.team = (Player.count % 2) ? 'B' : 'A';
 		this.bela = false;
-		Player.count++;
 	}
 
 	getOnlyCardSigns(): string[] {
@@ -26,18 +24,15 @@ export class Player {
 		return cards;
 	}
 
-	checkBela(sign: string): boolean {
-		if (this.bela) {
-			const trump = this.hand.find(x => x.sign === sign).trump;
-			if (trump && (sign[1] === 'Q' || sign[1] === 'K')) {
-				this.bela = false;
-				return true;
-			}
+	checkBela(card: Card): boolean {
+		if (this.bela && card.trump && (card.sign[1] === 'Q' || card.sign[1] === 'K')) {
+			this.bela = false;
+			return true;
 		}
 		return false;
 	}
 
-	sortHand() {
+	sortHand(): void {
 		this.hand.sort((a, b) => (a.scalePriority > b.scalePriority) ? 1 : -1);
 	}
 }

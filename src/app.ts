@@ -1,17 +1,16 @@
-import { Match } from './classes/Match';
-import { Game } from './classes/Game';
-import { Player } from './classes/Player';
-import { getUsernames, getTeams, getPlayerTeam } from './functions/playerHelperFunctions';
-import { evaluateScale } from './functions/evaluateScale';
-import { evaluatePlay } from './functions/evaluatePlay';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { Room } from './classes/Room';
+import { Card } from './classes/Card';
+import { evaluateScale } from './functions/evaluateScale';
+import { isPlayValid } from './functions/isPlayValid';
+import { evaluatePlay } from './functions/evaluatePlay';
+import { ACTIONS, ClientMessage } from './constants/Actions';
 
-const connections: any[] = [];
-let match: Match;
-let curGame: Game;
-const users: Player[] = [];
+
+let connections: number = 0;
+const rooms: Room[] = [];
 
 
 const app = express();
@@ -30,218 +29,251 @@ const socketIo = new Server(httpServer, {
   }
 });
 socketIo.on('connection', socket => {
+	console.log('Connected: %s sockets connected', ++connections);
 
-	connect(socket);
-
-	socket.on('newUser', (username: string) => {
-		socket.username = username;
-		newUser(username);
-	});
-
-	socket.on('calledTrump', (trump: string) => calledTrump(trump, socket.username));
-	socket.on('calledScale', (cards: string[]) => calledScale(cards, socket.username));
-	socket.on('cardPlayed', (card: string) => {
-		if (users.find(x => x.username === socket.username).checkBela(card)) {
-			socketIo.emit('callBela', { username: socket.username, card });
-		} else {
-			cardPlayed(card, socket.username);
-		}
-	});
-	socket.on('calledBela', (bela: any) => {
-		if (bela.called) {
-			calledBela(socket.username);
-		}
-		cardPlayed(bela.card, socket.username);
-	});
-
-	socket.on('userLeaves', (username: string) => userLeaves(username));
-	socket.on('killedMatch', (username: string) => socketIo.emit('killMatch', username));
-	socket.on('disconnect', () => disconnect(socket));
-});
-
-
-function connect(socket: any): void {
-	if (connections.length === 0) {
-		match = new Match();
-		curGame = match.startNewGame();
-	}
-	connections.push(socket);
-	console.log('Connected: %s sockets connected', connections.length);
-}
-
-function disconnect(socket: any): void {
-	const i = users.indexOf(users.find(user => user.username === socket.username));
-	if (i !== -1) {
-		users.splice(i, 1);
-	}
-	connections.splice(connections.indexOf(socket), 1);
-	console.log('Disconnected: %s sockets connected', connections.length);
-}
-
-function newUser(username: string): void {
-	const user = new Player(username, curGame.dealCards());
-	socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: false });
-	users.push(user);
-
-	if (user.team === 'A') {
-		match.teamA.users.push(user);
-	} else {
-		match.teamB.users.push(user);
-	}
-
-	if (users.length === 4) {
-		socketIo.emit('updateUsers', { usernames: getUsernames(users), teams: getTeams(users) });
-		setTimeout(() => {
-			socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
-		}, 2000);
-	} else {
-		socketIo.emit('updateUsers', { usernames: getUsernames(users), teams: null });
-	}
-}
-
-function calledTrump(trump: string, username: string): void {
-	if (trump === '') {
-		const turn = curGame.nextTurn();
-		const lastCall = users[Game.dealer].username === users[turn].username;
-		socketIo.emit('callTrump', { username: users[turn].username, lastCall });
-		const player = users.find(x => x.username === username);
-		player.sortHand();
-		socketIo.emit('hand', { username: player.username, hand: player.getOnlyCardSigns(), display8: true });
-	} else {
-		curGame.setTrump({ sign: trump, team: getPlayerTeam(users, username) });
-		curGame.setTrumpValues(users);
-		socketIo.emit('setTrump', { trump, username });
-		users.forEach(player => {
-			socketIo.emit('hand', { username: player.username, hand: player.getOnlyCardSigns(), display8: true });
-		});
-		const turn = curGame.turnAfterDealer();
-		socketIo.emit('callScale', users[turn].username);
-	}
-}
-
-function calledScale(cards: string[], username: string): void {
-	let announcePoints = 0;
-
-	if (cards.length !== 0) {
-		const scales = evaluateScale(cards);
-
-		if (!scales) {
-			socketIo.emit('moveNotAllowed', username);
-			socketIo.emit('callScale', username);
+	socket.on('clientMessage', (data: ClientMessage) => {
+		if (data.action === ACTIONS.JOIN_ROOM) {
+			joinRoom(socket, findRoom(data.roomId, data.roomCapacity), data.username, data.hand);
 			return;
 		}
 
-		announcePoints = (getPlayerTeam(users, username) === 'A') ? match.teamA.addScale(scales, curGame.curScalePriority, username)
-																  : match.teamB.addScale(scales, curGame.curScalePriority, username);
-	}
-
-	socketIo.emit('announceScale', { username, points: announcePoints, bela: false });
-	if (curGame.turn !== Game.dealer) {
-		socketIo.emit('callScale', users[curGame.nextTurn()].username);
-	} else {
-		if (curGame.curScalePriority.team === 'A') {
-			curGame.addScalePoints(match.teamA);
-			socketIo.emit('showScales', match.teamA.getScales());
-		} else if (curGame.curScalePriority.team === 'B') {
-			curGame.addScalePoints(match.teamB);
-			socketIo.emit('showScales', match.teamB.getScales());
+		const room = findRoom(socket.gameRoom);
+		const username = socket.username;
+		switch (data.action) {
+			case ACTIONS.CALLED_BELA: 	  calledBela(room, data.card, data.called, username); break;
+			case ACTIONS.CALLED_SCALE:    calledScale(room, data.cards, username);			  break;
+			case ACTIONS.CALLED_TRUMP:    calledTrump(room, data.trump, username);			  break;
+			case ACTIONS.DISCARDED: 	  discarded(room, data.cards, username);			  break;
+			case ACTIONS.PLAYED_CARD: 	  playedCard(room, data.card, username);			  break;
+			case ACTIONS.REORDER_PLAYERS: reorderPlayers(room, data.usernames);				  break;
 		}
-		socketIo.emit('gamePoints', curGame.getGamePoints());
-		socketIo.emit('playCard', users[curGame.turnAfterDealer()].username);
+	});
+
+	socket.on('disconnect', () => disconnect(socket));
+});
+
+function disconnect(socket: any): void {
+	if (socket.gameRoom) {
+		const room = rooms.find(r => r.id === socket.gameRoom);
+		room.userLeave(socket.username);
+		console.log(socket.username + ' left the room ' + socket.gameRoom);
+		if (room.users.length === 0) {
+			rooms.splice(rooms.indexOf(room), 1);
+			console.log('Room ' + socket.gameRoom + ' destroyed');
+		}
+	}
+	connections--;
+	console.log('Disconnected: %s sockets connected', connections);
+}
+
+function findRoom(id: string, capacity?: number): Room {
+	const i = rooms.indexOf(rooms.find(r => r.id === id));
+	if (i === -1) {
+		const r = new Room(id, capacity);
+		rooms.push(r);
+		return r;
+	} else {
+		return rooms[i];
 	}
 }
 
-function cardPlayed(card: string, username: string): void {
-	const user = users.find(x => x.username === username);
-
-	if (!curGame.isPlayValid(card, user)) {
-		socketIo.emit('moveNotAllowed', username);
-		return;
-	}
-
-	curGame.putCardOnTable(card, user);
-	socketIo.emit('acceptCard', { username, card });
-	socketIo.emit('hand', { username, hand: user.getOnlyCardSigns(), display8: true });
-
-	if (curGame.nextTurn() !== curGame.firstToPlay) {
-		socketIo.emit('playCard', users[curGame.turn].username);
-		return;
-	}
-
-	const points = evaluatePlay(curGame.cardsOnTable);
-	if (user.hand.length === 0) {
-		points.value += 10;
-		if (!curGame.tookCardsA || !curGame.tookCardsB) {
-			points.value += 90;
+function joinRoom(socket: any, room: Room, username: string, hand: Card[]): void {
+	const user = room.userJoin(username, socket.id, hand);
+	if (user) {
+		socket.join(room.id);
+		socket.username = username;
+		socket.gameRoom = room.id;
+		if (room.users.length !== room.capacity) {
+			const message = 'Čekamo još igrača (' + room.users.length + '/' + room.capacity + ')';
+			socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.INFO_WAITING, message });
+		} else {
+			const message = 'Admin mijenja redoslijed igrača';
+			socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.INFO_WAITING, message });
+			socketIo.to(room.users[0].id).emit('serverMessage', {
+				action: ACTIONS.ARRANGE_USERS,
+				users: room.users.map(u => u.username)
+			});
 		}
-		if (curGame.pointsA && !curGame.tookCardsA) {
-			curGame.pointsB += curGame.pointsA;
-			curGame.pointsA = 0;
-		} else if (curGame.pointsB && !curGame.tookCardsB) {
-			curGame.pointsA += curGame.pointsB;
-			curGame.pointsB = 0;
-		}
-	}
-
-	const team = getPlayerTeam(users, points.username);
-	if (team === 'A') {
-		curGame.pointsA += points.value;
-		curGame.tookCardsA = true;
+		console.log(username + ' joined room ' + room.id);
 	} else {
-		curGame.pointsB += points.value;
-		curGame.tookCardsB = true;
+		socket.emit('serverMessage', { action: ACTIONS.NO_ROOM });
+		console.log(username + ' couldn\'t join room ' + room.id);
+	}
+}
+
+function reorderPlayers(room: Room, usernames: string[]): void {
+	const newUsersArray = [];
+	usernames.forEach(u => newUsersArray.push(room.getUser(u)));
+	room.users = newUsersArray;
+	socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.UPDATE_USERS, users: usernames });
+	room.users.forEach(u => {
+		socketIo.to(u.id).emit('serverMessage', { action: ACTIONS.SET_HAND, hand: u.hand, displayAll: false });
+	});
+	socketIo.to(room.id).emit('serverMessage', {
+		action: ACTIONS.CALL_TRUMP,
+		username: room.users[room.curGame.turn].username,
+		lastCall: false
+	});
+}
+
+function calledTrump(room: Room, trump: string, username: string): void {
+	if (trump === '') {
+		// if user hasn't picked trump
+		// ask the next user to pick a trump
+		const turn = room.curGame.nextTurn();
+		socketIo.to(room.id).emit('serverMessage', {
+			action: ACTIONS.CALL_TRUMP,
+			username: room.users[turn].username,
+			lastCall: (room.curGame.dealer === turn)
+		});
+		// and reveal the hidden cards
+		const player = room.getUser(username);
+		player.sortHand();
+		socketIo.to(player.id).emit('serverMessage', { action: ACTIONS.SET_HAND, hand: player.hand, displayAll: true });
+	} else {
+		// set trump and update card values for all users
+		room.curGame.setTrump(trump, username, room.users);
+		// emit the trump
+		socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.SET_TRUMP, trump, username });
+		// update card values and reveal the hidden cards
+		room.users.forEach(p => {
+			socketIo.to(p.id).emit('serverMessage', { action: ACTIONS.SET_HAND, hand: p.hand, displayAll: true });
+		});
+		if (room.capacity === 4) {
+			socketIo.to(room.id).emit('serverMessage', {
+				action: ACTIONS.CALL_SCALE,
+				username: room.users[room.curGame.turnAfterDealer()].username
+			});
+		}
+	}
+}
+
+function discarded(room: Room, cards: string[], username: string): void {
+	const player = room.getUser(username);
+	room.curGame.discardTwoCards(player, cards);
+	socketIo.to(player.id).emit('serverMessage', { action: ACTIONS.SET_HAND, hand: player.hand, displayAll: true });
+	socketIo.to(room.id).emit('serverMessage', {
+		action: ACTIONS.CALL_SCALE,
+		username: room.users[room.curGame.turnAfterDealer()].username
+	});
+}
+
+function calledScale(room: Room, cards: string[], username: string): void {
+	const player = room.getUser(username);
+
+	let announcePoints = 0;
+	if (cards.length !== 0) {
+		const scales = evaluateScale(cards);
+		if (!scales) {
+			socketIo.to(player.id).emit('serverMessage', { action: ACTIONS.INFO, message: 'REKA SAN NE MOŽE!'});
+			socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.CALL_SCALE, username: player.username});
+			return;
+		}
+		const index = room.users.indexOf(player);
+		announcePoints = room.curGame.trackScales(scales, username, index, room.match);
+	}
+	socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.ANNOUNCE_SCALE, username, points: announcePoints });
+
+	if (room.curGame.turn !== room.curGame.dealer) {
+		socketIo.to(room.id).emit('serverMessage', {
+			action: ACTIONS.CALL_SCALE,
+			username: room.users[room.curGame.nextTurn()].username
+		});
+	} else {
+		socketIo.to(room.id).emit('serverMessage', {
+			action: ACTIONS.SHOW_SCALES,
+			scales: room.curGame.addScalePoints(room.match, room.users)
+		});
+		socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.GAME_POINTS, gamePoints: room.curGame.points });
+		socketIo.to(room.id).emit('serverMessage', {
+			action: ACTIONS.PLAY_CARD,
+			username: room.users[room.curGame.turnAfterDealer()].username
+		});
+	}
+}
+
+function playedCard(room: Room, c: string, username: string): void {
+	const player = room.getUser(username);
+	const card = player.hand.find(x => x.sign === c);
+
+	if (!isPlayValid(card, player.hand, room.curGame.cardsOnTable.map(x => x.card))) {
+		socketIo.to(player.id).emit('serverMessage', { action: ACTIONS.INFO, message: 'REKA SAN NE MOŽE!' });
+		return;
 	}
 
-	if (user.hand.length !== 0) {
+	if (player.checkBela(card)) {
+		socketIo.to(player.id).emit('serverMessage', { action: ACTIONS.CALL_BELA, card: c });
+		return;
+	}
+
+	room.curGame.putCardOnTable(card, player);
+	socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.ACCEPT_CARD, username, card: c });
+	socketIo.to(player.id).emit('serverMessage', { action: ACTIONS.SET_HAND, hand: player.hand, displayAll: true });
+
+	if (room.curGame.nextTurn() !== room.curGame.firstToPlay) {
+		socketIo.to(room.id).emit('serverMessage', {
+			action: ACTIONS.PLAY_CARD,
+			username: room.users[room.curGame.turn].username
+		});
+		return;
+	}
+
+	const points = evaluatePlay(room.curGame.cardsOnTable);
+	const winner = room.users.indexOf(room.getUser(points.username));
+	room.curGame.addCardPoints(points.value, player.hand.length === 0, winner);
+
+	if (player.hand.length !== 0) {
 		setTimeout(() => {
-			socketIo.emit('gamePoints', curGame.getGamePoints());
-			curGame.firstToPlay = users.indexOf(users.find(x => x.username === points.username));
-			curGame.turn = curGame.firstToPlay;
-			curGame.cardsOnTable = [];
-			socketIo.emit('playCard', users[curGame.turn].username);
+			socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.GAME_POINTS, gamePoints: room.curGame.points });
+			room.curGame.firstToPlay = winner;
+			room.curGame.turn = room.curGame.firstToPlay;
+			room.curGame.cardsOnTable = [];
+			socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.PLAY_CARD, username: points.username });
 		}, 2000);
 	} else {
-		if (curGame.checkForFail()) {
-			socketIo.emit('fail', curGame.trump.team);
+		const message = room.curGame.endGame(room.users.map(u => u.username));
+		if (message) {
+			setTimeout(() => {
+				socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.INFO, message });
+				// TODO tu se nesto zbuga (s front strane - otvaranje dialoga i to? odabere se null adut, podijele se karte)
+			}, 1000);
 		}
+
 		setTimeout(() => {
-			curGame = match.startNewGame();
-			const matchPoints =  match.getMatchPoints();
-			socketIo.emit('matchPoints', matchPoints);
-			const winnerTeam = match.endMatch(matchPoints.total);
-			if (winnerTeam) {
+			room.match.updateMatchPoints();
+			socketIo.to(room.id).emit('serverMessage', {
+				action: ACTIONS.MATCH_POINTS,
+				games: room.match.points,
+				total: room.match.total
+			});
+			const matchWinner = room.match.endMatch(room.users.map(u => u.username));
+			if (matchWinner) {
 				setTimeout(() => {
-					socketIo.emit('endMatch', winnerTeam);
+					socketIo.to(room.id).emit('endMatch', matchWinner);
 				}, 1000);
 			} else {
-				users.forEach(u => {
-					u.hand = curGame.dealCards();
-					socketIo.emit('hand', { username: u.username, hand: u.getOnlyCardSigns(), display8: false });
+				room.curGame = room.match.startNewGame(room.curGame.turnAfterDealer(room.capacity));
+				room.curGame.firstToPlay = room.curGame.turnAfterDealer();
+				room.users.forEach(u => {
+					u.hand = room.curGame.dealCards();
+					socketIo.to(u.id).emit('serverMessage', { action: ACTIONS.SET_HAND, hand: u.hand, displayAll: false });
 				});
-				socketIo.emit('callTrump', { username: users[curGame.turn].username, lastCall: false });
+				socketIo.to(room.id).emit('serverMessage', {
+					action: ACTIONS.CALL_TRUMP,
+					username: room.users[room.curGame.turn].username,
+					lastCall: false
+				});
 			}
-		}, 2000);
+		}, 2500);
 	}
 }
 
-function calledBela(username: string): void {
-	socketIo.emit('announceScale', { username, points: 20, bela: true });
-	const team = getPlayerTeam(users, username);
-	if (team === 'A') {
-		curGame.pointsA += 20;
-	} else {
-		curGame.pointsB += 20;
+function calledBela(room: Room, c: string, called: boolean, username: string): void {
+	if (called) {
+		socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.INFO, message: 'BELA!' });
+		const index = room.users.indexOf(room.getUser(username));
+		room.curGame.addBelaPoints(index);
+		socketIo.to(room.id).emit('serverMessage', { action: ACTIONS.GAME_POINTS, gamePoints: room.curGame.points });
 	}
-	socketIo.emit('gamePoints', curGame.getGamePoints());
-}
-
-function userLeaves(username: string) {
-	const i = users.indexOf(users.find(user => user.username === username));
-	if (i !== -1) {
-		users.splice(i, 1);
-	}
-	if (users.length === 0) {
-		match = new Match();
-		curGame = match.startNewGame();
-	}
+	playedCard(room, c, username);
 }

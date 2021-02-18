@@ -1,14 +1,11 @@
-import { Player } from './Player';
 import { Scale } from './Scale';
 
 export class Team {
 	name: string;
-	users: Player[];
 	scales: any[];
 
 	constructor(name: string) {
 		this.name = name;
-		this.users = [];
 		this.scales = [];
 	}
 

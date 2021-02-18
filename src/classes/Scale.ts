@@ -9,8 +9,4 @@ export class Scale {
 		this.points = points;
 		this.priority = priority;
 	}
-
-	defineCards(cardSymbols: string[]) {
-		this.cardSymbols = cardSymbols;
-	}
 }
